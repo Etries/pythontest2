@@ -1,0 +1,96 @@
+#!/usr/bin/env python3
+"""
+Full Object-Oriented Programming Implementation for Exercise #4.2
+Strictly based on the PDF methods.
+"""
+
+import pandas as pd  # Importing Pandas for CSV handling
+
+# Step 1: Define the Car class strictly using PDF methods
+class Car:
+    """Common base class for all Cars"""
+    car_count = 0  # Class attribute to keep track of the number of Car instances
+
+    def __init__(self, ref_num, make, model, model_version, years_sold, power=None):
+        """Constructor method"""
+        self.ref_num = ref_num
+        self.make = make
+        self.model = model
+        self.model_version = model_version
+        self.years_sold = years_sold
+        self.power = power  # Some cars might not have a power attribute
+        
+        Car.car_count += 1  # Increment car count on each instantiation
+
+    def display_count(self):
+        """Instance method to display total number of cars"""
+        return f"Total Cars: {Car.car_count}\n"
+
+    def display_car(self):
+        """Display car method"""
+        return f"Car {self.ref_num}: {self.make} {self.model} {self.model_version} ({self.years_sold})\n"
+
+# Step 2: Read CSV file and extract a subset of cars
+csv_file_path = "car_models_dataset.csv"  # Ensure the correct file path
+car_data = pd.read_csv(csv_file_path)  # Read CSV into DataFrame
+subset_cars = car_data.head(8)  # Extract first 8 rows
+
+# Step 3: Record the length of the longest elements in each category
+longest_elements = {
+    "Make": max(len(str(x)) for x in subset_cars["Make"]),
+    "Model": max(len(str(x)) for x in subset_cars["Model"]),
+    "Model Version": max(len(str(x)) for x in subset_cars["Model version"]),
+    "Years Sold": max(len(str(x)) for x in subset_cars["Years sold"]),
+    "Power (RPM)": max(len(str(x)) for x in subset_cars["Power (rpm)"])
+}
+
+# Step 4: Instantiate each car as an object of the Car class
+car_objects = []  # List to store car objects
+for index, row in subset_cars.iterrows():
+    car = Car(index, row["Make"], row["Model"], row["Model version"], row["Years sold"], row["Power (rpm)"])
+    car_objects.append(car)
+
+# Step 5: Display the total car count using an instance
+car_count = car_objects[0].display_count()  # Call from the first instance
+
+# Step 6: Print details of each car with formatted pretty print
+print("\nFormatted Car Details:")
+header = f"{'Ref Num':<10} {'Make':<{longest_elements['Make']}} {'Model':<{longest_elements['Model']}} {'Model Version':<{longest_elements['Model Version']}} {'Years Sold':<{longest_elements['Years Sold']}} {'Power (RPM)':<{longest_elements['Power (RPM)']}}"
+print(header)
+print("-" * len(header))
+for car in car_objects:
+    print(f"{car.ref_num:<10} {car.make:<{longest_elements['Make']}} {car.model:<{longest_elements['Model']}} {car.model_version:<{longest_elements['Model Version']}} {car.years_sold:<{longest_elements['Years Sold']}} {str(car.power if hasattr(car, 'power') else 'N/A'):<{longest_elements['Power (RPM)']}}")
+
+# Step 7: Modify attributes of the first three car instances
+car_objects[0].years_sold = "2016-2018"
+car_objects[1].model_version = "Kangoo"
+car_objects[2].power = 1776  # Adding power to this car
+
+# Step 8: Identify cars with a 'power' attribute and display them
+cars_with_power = [(car.ref_num, car.make, car.model, car.model_version, car.power) 
+                   for car in car_objects if hasattr(car, "power") and car.power is not None]
+
+# Step 9: Remove the 'power' attribute from Car 2 and confirm it
+delattr(car_objects[2], "power")  # Removing power attribute from the third car
+power_exists_after_deletion = hasattr(car_objects[2], "power")
+
+# Step 10: Save the modified dataset to a new CSV file
+new_csv_file_path = "modified_car_models_dataset.csv"
+modified_data = pd.DataFrame([{  
+    "Ref Num": car.ref_num,
+    "Make": car.make,
+    "Model": car.model,
+    "Model Version": car.model_version,
+    "Years Sold": car.years_sold,
+    "Power (RPM)": car.power if hasattr(car, "power") else None
+} for car in car_objects])
+modified_data.to_csv(new_csv_file_path, index=False)
+
+# Display results
+print(car_count)
+print("\nCars with a 'power' attribute before deletion:")
+for car in cars_with_power:
+    print(car)
+
+print("\nPower attribute removed from Car 2:", not power_exists_after_deletion)
+print(f"\nModified dataset saved as {new_csv_file_path}")
